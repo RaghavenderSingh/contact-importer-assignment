@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "rules": "firestore-test-mode.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
