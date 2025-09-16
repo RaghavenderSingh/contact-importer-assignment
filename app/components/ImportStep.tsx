@@ -4,7 +4,6 @@ import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
-  FileText,
   AlertCircle,
   CheckCircle,
   X,

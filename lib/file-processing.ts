@@ -121,7 +121,7 @@ export class FileProcessingService {
           // Convert to array of arrays
           const jsonData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
-          }) as any[][];
+          }) as unknown[][];
 
           if (jsonData.length === 0) {
             reject(new Error("Excel file is empty"));

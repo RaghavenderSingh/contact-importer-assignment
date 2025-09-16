@@ -8,10 +8,7 @@ import {
   FieldMappingService,
 } from "../../lib/field-mapping";
 import GridBackground from "../../components/ui/grid-background";
-const mockFileData = {
-  headers: ["First Name", "Last Name", "Email", "Phone", "Company"],
-  rows: [],
-};
+import Image from "next/image";
 
 interface AIColumnDetectionStepProps {
   fileData: ParsedFileData;
@@ -128,7 +125,13 @@ export default function AIColumnDetectionStep({
               customFieldConfig: {
                 label: header,
                 fieldName: header.toLowerCase().replace(/[^a-z0-9]/g, "_"),
-                type: dataType,
+                type: dataType as
+                  | "text"
+                  | "number"
+                  | "phone"
+                  | "email"
+                  | "datetime"
+                  | "checkbox",
                 core: false,
               },
             };
@@ -197,9 +200,11 @@ export default function AIColumnDetectionStep({
                   padding: "22.65px",
                 }}
               >
-                <img
+                <Image
                   src="/sparkles.svg"
                   alt="Sparkles"
+                  width={49}
+                  height={60}
                   style={{
                     width: "48.84px",
                     height: "60.21px",

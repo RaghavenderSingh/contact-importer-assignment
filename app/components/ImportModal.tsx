@@ -7,10 +7,7 @@ import {
   FileProcessingService,
   ParsedFileData,
 } from "../../lib/file-processing";
-import {
-  FieldMappingService,
-  FieldDetectionResult,
-} from "../../lib/field-mapping";
+import { FieldDetectionResult } from "../../lib/field-mapping";
 import { FileUpload } from "./FileUpload";
 import AIColumnDetectionStep from "./AIColumnDetectionStep";
 import FieldMappingStep from "./FieldMappingStep";
@@ -21,12 +18,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Stepper, { StepperStep } from "@/components/ui/stepper";
 import Image from "next/image";
 
@@ -52,7 +46,7 @@ interface ImportState {
     imported: number;
     merged: number;
     errors: number;
-    errorDetails: any[];
+    errorDetails: string[];
   } | null;
   error: string | null;
 }
@@ -69,8 +63,6 @@ export default function ImportModal({
     importResults: null,
     error: null,
   });
-
-  const fieldMappingService = new FieldMappingService();
 
   const resetModal = useCallback(() => {
     setState({
@@ -167,7 +159,12 @@ export default function ImportModal({
     []
   );
 
-  const handleProcessingComplete = (results: any) => {
+  const handleProcessingComplete = (results: {
+    imported: number;
+    merged: number;
+    errors: number;
+    errorDetails: string[];
+  }) => {
     setState((prev) => ({
       ...prev,
       step: "summary",
@@ -180,11 +177,6 @@ export default function ImportModal({
       ...prev,
       error,
     }));
-  };
-
-  const handleImportSuccess = () => {
-    onSuccess();
-    handleClose();
   };
 
   const getStepperSteps = (): StepperStep[] => {
@@ -229,11 +221,6 @@ export default function ImportModal({
   const getCurrentStepIndex = () => {
     const stepIds = ["detection", "smart_mapping", "processing"];
     return stepIds.findIndex((stepId) => stepId === state.step);
-  };
-
-  const getStepProgress = () => {
-    const totalSteps = 3;
-    return ((getCurrentStepIndex() + 1) / totalSteps) * 100;
   };
 
   const getStepTitle = () => {
@@ -362,23 +349,11 @@ export default function ImportModal({
                     )}
 
                     {state.step === "processing" && state.fileData && (
-                      <ImportProcessingStep
-                        fileData={state.fileData}
-                        fieldMappings={state.fieldMappings}
-                        onComplete={handleProcessingComplete}
-                        onError={handleProcessingError}
-                        onBack={() =>
-                          setState((prev) => ({ ...prev, step: "mapping" }))
-                        }
-                      />
+                      <ImportProcessingStep />
                     )}
 
                     {state.step === "summary" && state.importResults && (
-                      <ImportSummaryStep
-                        results={state.importResults}
-                        onClose={handleClose}
-                        onImportMore={() => resetModal()}
-                      />
+                      <ImportSummaryStep />
                     )}
                   </motion.div>
                 </AnimatePresence>

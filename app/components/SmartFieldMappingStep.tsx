@@ -2,26 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle,
-  AlertTriangle,
-  Search,
-  Target,
-  Wrench,
-  ArrowRightLeft,
-  ChevronDown,
-  Plus,
-  X,
-} from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { ParsedFileData } from "../../lib/file-processing";
-import {
-  FieldDetectionResult,
-  FieldMappingService,
-} from "../../lib/field-mapping";
+import { FieldDetectionResult } from "../../lib/field-mapping";
 import { contactFieldService } from "../../lib/collections";
 import { ContactField } from "../../types/firestore";
+import Image from "next/image";
 
 interface SmartFieldMappingStepProps {
   fileData: ParsedFileData;
@@ -92,13 +78,6 @@ export default function SmartFieldMappingStep({
     return "text-red-600 bg-red-50 rounded";
   };
 
-  const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 90) return "High";
-    if (confidence >= 70) return "Good";
-    if (confidence >= 50) return "Medium";
-    return "Low";
-  };
-
   const handleFieldMappingChange = (index: number, newField: string) => {
     const updatedMappings = [...mappings];
     updatedMappings[index] = {
@@ -112,15 +91,19 @@ export default function SmartFieldMappingStep({
     if (!newCustomFieldName.trim()) return;
 
     try {
-      const newField: ContactField = {
-        id: `custom_${Date.now()}`,
+      const newField: Omit<ContactField, "id"> = {
         label: newCustomFieldName.trim(),
         fieldName: newCustomFieldName.toLowerCase().replace(/[^a-z0-9]/g, "_"),
-        type: mappings[index].dataType || "text",
+        type: (mappings[index].dataType || "text") as
+          | "text"
+          | "number"
+          | "phone"
+          | "email"
+          | "datetime"
+          | "checkbox",
         core: false,
         required: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdOn: new Date() as any, // Will be converted to Timestamp by the service
       };
 
       await contactFieldService.createField(newField);
@@ -142,14 +125,6 @@ export default function SmartFieldMappingStep({
     }
   };
 
-  const handleContinue = () => {
-    onComplete(mappings);
-  };
-
-  const canContinue = mappings.some(
-    (m) => m.suggestedField && m.suggestedField !== "new_custom_field"
-  );
-
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -160,8 +135,6 @@ export default function SmartFieldMappingStep({
   }
 
   const availableFields = getAvailableFields();
-  const highConfidenceCount = mappings.filter((m) => m.confidence >= 90).length;
-  const customFieldCount = mappings.filter((m) => m.isCustomField).length;
 
   return (
     <div className="h-full flex flex-col max-w-6xl mx-auto">
@@ -173,20 +146,33 @@ export default function SmartFieldMappingStep({
             </h2>
             <p className="text-[#68818C] text-[17px] font-normal leading-[120%] tracking-[0%]">
               Review and adjust the AI-powered field mappings below. Click
-              "Edit" next to any mapping to change it. You can map to existing
-              CRM fields or create custom fields with different data types.
+              &quot;Edit&quot; next to any mapping to change it. You can map to
+              existing CRM fields or create custom fields with different data
+              types.
             </p>
           </div>
 
           <div className="flex justify-end items-center gap-3 flex-shrink-0">
             <button className="flex items-center gap-2 px-4 py-2 text-[#444444] hover:text-[#0E4259] hover:bg-gray-100 rounded-lg transition-colors">
-              <img src="/reset.svg" alt="Reset" className="w-4 h-4" />
+              <Image
+                src="/reset.svg"
+                alt="Reset"
+                width={16}
+                height={16}
+                className="w-4 h-4"
+              />
               <span className="text-base font-normal leading-[100%] tracking-[0%]">
                 Reset to Default
               </span>
             </button>
             <button className="flex items-center gap-2 px-4 py-2 text-[#444444] hover:text-[#0E4259] hover:bg-gray-100 rounded-lg transition-colors">
-              <img src="/manage.svg" alt="Manage" className="w-4 h-4" />
+              <Image
+                src="/manage.svg"
+                alt="Manage"
+                width={16}
+                height={16}
+                className="w-4 h-4"
+              />
               <span className="text-base font-normal leading-[100%] tracking-[0%]">
                 More Mapping Options
               </span>
@@ -253,9 +239,11 @@ export default function SmartFieldMappingStep({
               </div>
 
               <div className="flex items-center gap-4 mb-4">
-                <img
+                <Image
                   src="/Chain.svg"
                   alt="Link"
+                  width={16}
+                  height={10}
                   className="w-4 h-[10px] opacity-100"
                 />
                 <div className="flex-1">

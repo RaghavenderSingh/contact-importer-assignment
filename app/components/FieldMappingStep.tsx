@@ -2,23 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle,
-  AlertTriangle,
-  Search,
-  Target,
-  Wrench,
-  ArrowRightLeft,
-} from "lucide-react";
+import { ArrowRight, Search, Target, Wrench } from "lucide-react";
 import { ParsedFileData } from "../../lib/file-processing";
-import {
-  FieldDetectionResult,
-  FieldMappingService,
-} from "../../lib/field-mapping";
+import { FieldDetectionResult } from "../../lib/field-mapping";
 import { contactFieldService } from "../../lib/collections";
 import { ContactField } from "../../types/firestore";
+import Image from "next/image";
 
 interface FieldMappingStepProps {
   fileData: ParsedFileData;
@@ -35,8 +24,7 @@ export default function FieldMappingStep({
   onBack,
   onMappingsChange,
 }: FieldMappingStepProps) {
-  const [mappings, setMappings] =
-    useState<FieldDetectionResult[]>(initialMappings);
+  const [mappings] = useState<FieldDetectionResult[]>(initialMappings);
   const [contactFields, setContactFields] = useState<ContactField[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -84,21 +72,6 @@ export default function FieldMappingStep({
     return "text-red-600 bg-red-50 rounded";
   };
 
-  const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 90) return "High";
-    if (confidence >= 70) return "Good";
-    if (confidence >= 50) return "Medium";
-    return "Low";
-  };
-
-  const handleContinue = () => {
-    onComplete(mappings);
-  };
-
-  const canContinue = mappings.some(
-    (m) => m.suggestedField && m.suggestedField !== "new_custom_field"
-  );
-
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -111,6 +84,10 @@ export default function FieldMappingStep({
   const availableFields = getAvailableFields();
   const highConfidenceCount = mappings.filter((m) => m.confidence >= 90).length;
   const customFieldCount = mappings.filter((m) => m.isCustomField).length;
+
+  const handleContinue = () => {
+    onComplete(mappings);
+  };
 
   return (
     <div className="space-y-8 p-4 max-w-full overflow-hidden">
@@ -184,9 +161,11 @@ export default function FieldMappingStep({
                   <span className="text-[20px] font-medium text-[#0E4259] leading-[100%] tracking-[0%]">
                     {mapping.columnName}
                   </span>
-                  <img
+                  <Image
                     src="/Chain.svg"
                     alt="Link"
+                    width={16}
+                    height={10}
                     className="w-4 h-[10px] opacity-100"
                   />
                   <span className="text-[20px] font-medium text-[#1970F3] leading-[100%] tracking-[0%]">

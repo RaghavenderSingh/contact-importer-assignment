@@ -58,7 +58,7 @@ export interface FieldDetectionResult {
 
 export class FieldMappingService {
   private contactFields: ContactField[] = [];
-  private users: any[] = [];
+  private users: unknown[] = [];
 
   constructor() {
     this.loadData();

@@ -14,6 +14,7 @@ import {
   Timestamp,
   DocumentData,
   QueryConstraint,
+  CollectionReference,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Contact, ContactField, User, ImportSession } from "../types/firestore";
@@ -70,7 +71,7 @@ export const CORE_FIELDS: Omit<ContactField, "id">[] = [
 
 // Generic CRUD operations
 export const createDocument = async <T extends DocumentData>(
-  collectionRef: any,
+  collectionRef: CollectionReference,
   data: Omit<T, "id">
 ): Promise<string> => {
   const docRef = await addDoc(collectionRef, {
@@ -81,7 +82,7 @@ export const createDocument = async <T extends DocumentData>(
 };
 
 export const getDocument = async <T extends DocumentData>(
-  collectionRef: any,
+  collectionRef: CollectionReference,
   id: string
 ): Promise<T | null> => {
   const docRef = doc(collectionRef, id);
@@ -90,7 +91,7 @@ export const getDocument = async <T extends DocumentData>(
 };
 
 export const updateDocument = async <T extends DocumentData>(
-  collectionRef: any,
+  collectionRef: CollectionReference,
   id: string,
   data: Partial<T>
 ): Promise<void> => {
@@ -102,7 +103,7 @@ export const updateDocument = async <T extends DocumentData>(
 };
 
 export const deleteDocument = async (
-  collectionRef: any,
+  collectionRef: CollectionReference,
   id: string
 ): Promise<void> => {
   const docRef = doc(collectionRef, id);
@@ -110,7 +111,7 @@ export const deleteDocument = async (
 };
 
 export const queryDocuments = async <T extends DocumentData>(
-  collectionRef: any,
+  collectionRef: CollectionReference,
   constraints: QueryConstraint[] = []
 ): Promise<T[]> => {
   const q = query(collectionRef, ...constraints);
@@ -124,10 +125,7 @@ export const queryDocuments = async <T extends DocumentData>(
 // Contact-specific operations
 export const contactService = {
   // Get all contacts with pagination
-  getContacts: async (
-    pageSize: number = 50,
-    lastDoc?: any
-  ): Promise<Contact[]> => {
+  getContacts: async (pageSize: number = 50): Promise<Contact[]> => {
     const constraints = [orderBy("createdOn", "desc"), limit(pageSize)];
     return queryDocuments<Contact>(contactsRef, constraints);
   },
@@ -178,7 +176,7 @@ export const contactService = {
     contacts: Omit<Contact, "id" | "createdOn">[]
   ): Promise<string[]> => {
     const batch = writeBatch(db);
-    const docRefs: any[] = [];
+    const docRefs: unknown[] = [];
 
     contacts.forEach((contact) => {
       const docRef = doc(contactsRef);
@@ -204,7 +202,9 @@ export const contactService = {
         key !== "createdOn" &&
         newData[key as keyof Contact]
       ) {
-        merged[key as keyof Contact] = newData[key as keyof Contact] as any;
+        merged[key as keyof Contact] = newData[
+          key as keyof Contact
+        ] as Contact[keyof Contact];
       }
     });
 

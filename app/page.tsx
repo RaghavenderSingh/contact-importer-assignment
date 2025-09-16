@@ -7,13 +7,6 @@ import ImportModal from "./components/ImportModal";
 import UserManagement from "./components/UserManagement";
 import FieldManagement from "./components/FieldManagement";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TabType = "contacts" | "import" | "users" | "fields";

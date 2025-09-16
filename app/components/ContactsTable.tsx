@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, User, Mail, Phone, Calendar } from "lucide-react";
+import { Search, User, Mail, Phone, Calendar } from "lucide-react";
 import { Contact, User as UserType } from "../../types/firestore";
 import { contactService, userService } from "../../lib/collections";
 
@@ -59,10 +59,26 @@ export default function ContactsTable({ onImportClick }: ContactsTableProps) {
     return agent?.name || "Unknown Agent";
   };
 
-  const formatDate = (timestamp: any): string => {
+  const formatDate = (timestamp: unknown): string => {
     if (!timestamp) return "N/A";
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString();
+
+    // Handle Firestore Timestamp objects
+    if (
+      typeof timestamp === "object" &&
+      timestamp !== null &&
+      "toDate" in timestamp
+    ) {
+      const firestoreTimestamp = timestamp as { toDate: () => Date };
+      return firestoreTimestamp.toDate().toLocaleDateString();
+    }
+
+    // Handle regular Date objects or date strings
+    try {
+      const date = new Date(timestamp as string | number | Date);
+      return date.toLocaleDateString();
+    } catch {
+      return "N/A";
+    }
   };
 
   if (loading) {

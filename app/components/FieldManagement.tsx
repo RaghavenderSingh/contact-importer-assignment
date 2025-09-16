@@ -231,7 +231,13 @@ export default function FieldManagement() {
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      type: e.target.value as any,
+                      type: e.target.value as
+                        | "text"
+                        | "number"
+                        | "phone"
+                        | "email"
+                        | "datetime"
+                        | "checkbox",
                     }))
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
