@@ -1,4 +1,4 @@
-import { ContactField, FieldMapping } from "../types/firestore";
+import { ContactField, User } from "../types/firestore";
 import { userService } from "./collections";
 
 // Field mapping patterns for intelligent detection
@@ -58,7 +58,7 @@ export interface FieldDetectionResult {
 
 export class FieldMappingService {
   private contactFields: ContactField[] = [];
-  private users: unknown[] = [];
+  private users: User[] = [];
 
   constructor() {
     this.loadData();

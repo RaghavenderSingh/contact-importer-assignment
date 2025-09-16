@@ -7,6 +7,7 @@ import { ParsedFileData } from "../../lib/file-processing";
 import { FieldDetectionResult } from "../../lib/field-mapping";
 import { contactFieldService } from "../../lib/collections";
 import { ContactField } from "../../types/firestore";
+import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 
 interface SmartFieldMappingStepProps {
@@ -91,7 +92,7 @@ export default function SmartFieldMappingStep({
     if (!newCustomFieldName.trim()) return;
 
     try {
-      const newField: Omit<ContactField, "id"> = {
+      const newFieldData: Omit<ContactField, "id"> = {
         label: newCustomFieldName.trim(),
         fieldName: newCustomFieldName.toLowerCase().replace(/[^a-z0-9]/g, "_"),
         type: (mappings[index].dataType || "text") as
@@ -103,10 +104,14 @@ export default function SmartFieldMappingStep({
           | "checkbox",
         core: false,
         required: false,
-        createdOn: new Date() as any, // Will be converted to Timestamp by the service
+        createdOn: new Date() as unknown as Timestamp, // Will be converted to Timestamp by the service
       };
 
-      await contactFieldService.createField(newField);
+      const fieldId = await contactFieldService.createField(newFieldData);
+      const newField: ContactField = {
+        ...newFieldData,
+        id: fieldId,
+      };
       setContactFields((prev) => [...prev, newField]);
 
       const updatedMappings = [...mappings];

@@ -49,10 +49,10 @@ export default function UserManagement() {
         });
       } else {
         await userService.createUser({
-          uid: "",
           name: formData.name.trim(),
           email: formData.email.trim(),
           role: formData.role,
+          active: true,
         });
       }
 

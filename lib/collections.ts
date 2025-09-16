@@ -15,6 +15,7 @@ import {
   DocumentData,
   QueryConstraint,
   CollectionReference,
+  DocumentReference,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Contact, ContactField, User, ImportSession } from "../types/firestore";
@@ -87,7 +88,9 @@ export const getDocument = async <T extends DocumentData>(
 ): Promise<T | null> => {
   const docRef = doc(collectionRef, id);
   const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as T) : null;
+  return docSnap.exists()
+    ? ({ id: docSnap.id, ...docSnap.data() } as unknown as T)
+    : null;
 };
 
 export const updateDocument = async <T extends DocumentData>(
@@ -119,7 +122,7 @@ export const queryDocuments = async <T extends DocumentData>(
   return querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  })) as T[];
+  })) as unknown as T[];
 };
 
 // Contact-specific operations
@@ -176,7 +179,7 @@ export const contactService = {
     contacts: Omit<Contact, "id" | "createdOn">[]
   ): Promise<string[]> => {
     const batch = writeBatch(db);
-    const docRefs: unknown[] = [];
+    const docRefs: DocumentReference[] = [];
 
     contacts.forEach((contact) => {
       const docRef = doc(contactsRef);
@@ -224,7 +227,10 @@ export const contactFieldService = {
   createField: async (
     field: Omit<ContactField, "id" | "createdOn">
   ): Promise<string> => {
-    return createDocument(contactFieldsRef, field);
+    return createDocument(contactFieldsRef, {
+      ...field,
+      createdOn: Timestamp.now(),
+    });
   },
 
   updateField: async (
@@ -276,7 +282,7 @@ export const userService = {
     if (querySnapshot.empty) return null;
 
     const doc = querySnapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as User;
+    return { id: doc.id, ...doc.data() } as unknown as User;
   },
 
   createUser: async (
@@ -302,7 +308,10 @@ export const importSessionService = {
   createSession: async (
     session: Omit<ImportSession, "id" | "createdOn">
   ): Promise<string> => {
-    return createDocument(importSessionsRef, session);
+    return createDocument(importSessionsRef, {
+      ...session,
+      createdOn: Timestamp.now(),
+    });
   },
 
   updateSession: async (

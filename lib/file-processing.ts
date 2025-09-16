@@ -30,7 +30,7 @@ export class FileProcessingService {
         complete: (results) => {
           console.log("CSV parsing complete, results:", {
             dataLength: results.data.length,
-            errors: results.errors.length,
+            errorCount: results.errors.length,
             errors: results.errors,
           });
 
@@ -85,14 +85,13 @@ export class FileProcessingService {
           console.log("CSV parsing result:", result);
           resolve(result);
         },
-        error: (error) => {
-          console.error("CSV parsing error:", error);
-          reject(new Error(`Failed to parse CSV: ${error.message}`));
-        },
       };
 
       console.log("Starting Papa.parse...");
-      Papa.parse(file, config);
+      (Papa.parse as unknown as (file: File, config: Papa.ParseConfig) => void)(
+        file,
+        config
+      );
     });
   }
 

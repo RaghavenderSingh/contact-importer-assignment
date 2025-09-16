@@ -40,6 +40,7 @@ async function setupSampleData() {
           name: user.name,
           email: user.email,
           role: user.role,
+          active: true,
         });
         console.log(`✅ Created user: ${user.name}`);
       } catch (error) {
@@ -77,10 +78,7 @@ async function setupSampleData() {
     console.log("📇 Creating sample contacts...");
     for (const contact of sampleContacts) {
       try {
-        await contactService.createDocument(contactService.contactsRef, {
-          ...contact,
-          createdOn: Timestamp.now(),
-        });
+        await contactService.createContactsBatch([contact]);
         console.log(
           `✅ Created contact: ${contact.firstName} ${contact.lastName}`
         );
