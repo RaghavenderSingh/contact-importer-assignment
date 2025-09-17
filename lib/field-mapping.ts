@@ -4,13 +4,19 @@ import { userService } from "./collections";
 // Field mapping patterns for intelligent detection
 const FIELD_PATTERNS = {
   firstName: {
-    keywords: ["first", "given", "fname", "forename", "name"],
+    keywords: ["first", "given", "fname", "forename"],
     patterns: [/^first.?name$/i, /^given.?name$/i, /^f.?name$/i],
     priority: 90,
   },
   lastName: {
-    keywords: ["last", "family", "surname", "lname"],
-    patterns: [/^last.?name$/i, /^family.?name$/i, /^surname$/i, /^l.?name$/i],
+    keywords: ["last", "family", "surname", "lname", "lastname"],
+    patterns: [
+      /^last.?name$/i,
+      /^family.?name$/i,
+      /^surname$/i,
+      /^l.?name$/i,
+      /^lastname$/i,
+    ],
     priority: 90,
   },
   email: {

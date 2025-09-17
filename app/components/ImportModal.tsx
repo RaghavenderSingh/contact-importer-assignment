@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AlertCircle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -63,6 +63,8 @@ export default function ImportModal({
     importResults: null,
     error: null,
   });
+  const [isMoveToContactsDisabled, setIsMoveToContactsDisabled] =
+    useState(true);
 
   const resetModal = useCallback(() => {
     setState({
@@ -167,7 +169,6 @@ export default function ImportModal({
   }) => {
     setState((prev) => ({
       ...prev,
-      step: "summary",
       importResults: results,
     }));
   };
@@ -179,21 +180,40 @@ export default function ImportModal({
     }));
   };
 
+  const handleMoveToContacts = useCallback(() => {
+    setState((prev) => ({ ...prev, step: "summary" }));
+    onSuccess();
+  }, [onSuccess]);
+
   const getStepperSteps = (): StepperStep[] => {
     const stepIds = ["detection", "smart_mapping", "processing"];
-    const currentStepIndex = getCurrentStepIndex();
+
+    const getStepState = (
+      stepId: string,
+      index: number
+    ): "complete" | "current" | "pending" => {
+      switch (state.step) {
+        case "upload":
+        case "detection":
+          return stepId === "detection" ? "current" : "pending";
+        case "mapping":
+          return stepId === "detection" ? "complete" : "pending";
+        case "smart_mapping":
+          return stepId === "detection"
+            ? "complete"
+            : stepId === "smart_mapping"
+            ? "current"
+            : "pending";
+        case "processing":
+          return stepId === "processing" ? "current" : "complete";
+        case "summary":
+          return "complete";
+        default:
+          return "pending";
+      }
+    };
 
     return stepIds.map((stepId, index) => {
-      let state: "complete" | "current" | "pending";
-
-      if (index < currentStepIndex) {
-        state = "complete";
-      } else if (index === currentStepIndex) {
-        state = "current";
-      } else {
-        state = "pending";
-      }
-
       const stepConfig = {
         detection: {
           heading: "Detect Fields",
@@ -210,7 +230,7 @@ export default function ImportModal({
       };
 
       return {
-        state,
+        state: getStepState(stepId, index),
         stepCount: index + 1,
         heading: stepConfig[stepId as keyof typeof stepConfig].heading,
         subtext: stepConfig[stepId as keyof typeof stepConfig].subtext,
@@ -349,11 +369,18 @@ export default function ImportModal({
                     )}
 
                     {state.step === "processing" && state.fileData && (
-                      <ImportProcessingStep />
+                      <ImportProcessingStep
+                        fileData={state.fileData}
+                        fieldMappings={state.fieldMappings}
+                        onComplete={handleProcessingComplete}
+                        onError={handleProcessingError}
+                        onMoveToContacts={handleMoveToContacts}
+                        onDisabledStateChange={setIsMoveToContactsDisabled}
+                      />
                     )}
 
                     {state.step === "summary" && state.importResults && (
-                      <ImportSummaryStep />
+                      <ImportSummaryStep results={state.importResults} />
                     )}
                   </motion.div>
                 </AnimatePresence>
@@ -412,6 +439,8 @@ export default function ImportModal({
                     } else if (state.step === "smart_mapping") {
                       handleSmartMappingComplete(state.fieldMappings);
                     } else if (state.step === "processing") {
+                      // Call the move to contacts handler
+                      handleMoveToContacts();
                     }
                   }}
                   disabled={
@@ -429,11 +458,11 @@ export default function ImportModal({
                           m.suggestedField &&
                           m.suggestedField !== "new_custom_field"
                       )) ||
-                    state.step === "processing"
+                    (state.step === "processing" && isMoveToContactsDisabled)
                   }
                   className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-[#0E4259] hover:bg-[#0a3447] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0E4259] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next
+                  {state.step === "processing" ? "Move to Contacts" : "Next"}
                   <svg
                     className="w-4 h-4 ml-2"
                     fill="none"

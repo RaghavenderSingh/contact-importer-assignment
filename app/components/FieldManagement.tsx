@@ -8,7 +8,6 @@ import { contactFieldService } from "../../lib/collections";
 
 export default function FieldManagement() {
   const [fields, setFields] = useState<ContactField[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingField, setEditingField] = useState<ContactField | null>(null);
   const [formData, setFormData] = useState({
@@ -30,13 +29,10 @@ export default function FieldManagement() {
 
   const loadFields = async () => {
     try {
-      setLoading(true);
       const fieldsData = await contactFieldService.getFields();
       setFields(fieldsData);
     } catch (error) {
       console.error("Failed to load fields:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -133,21 +129,6 @@ export default function FieldManagement() {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const coreFields = fields.filter((f) => f.core);
   const customFields = fields.filter((f) => !f.core);
 
@@ -243,12 +224,24 @@ export default function FieldManagement() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={editingField?.core}
                 >
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="email">Email</option>
-                  <option value="phone">Phone</option>
-                  <option value="datetime">Date/Time</option>
-                  <option value="checkbox">Checkbox</option>
+                  <option key="text" value="text">
+                    Text
+                  </option>
+                  <option key="number" value="number">
+                    Number
+                  </option>
+                  <option key="email" value="email">
+                    Email
+                  </option>
+                  <option key="phone" value="phone">
+                    Phone
+                  </option>
+                  <option key="datetime" value="datetime">
+                    Date/Time
+                  </option>
+                  <option key="checkbox" value="checkbox">
+                    Checkbox
+                  </option>
                 </select>
               </div>
 

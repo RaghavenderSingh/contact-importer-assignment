@@ -8,7 +8,6 @@ import { userService } from "../../lib/collections";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserType[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [formData, setFormData] = useState({
@@ -23,13 +22,10 @@ export default function UserManagement() {
 
   const loadUsers = async () => {
     try {
-      setLoading(true);
       const usersData = await userService.getUsers();
       setUsers(usersData);
     } catch (error) {
       console.error("Failed to load users:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -93,21 +89,6 @@ export default function UserManagement() {
     setShowAddForm(false);
     setEditingUser(null);
   };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -187,8 +168,12 @@ export default function UserManagement() {
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="agent">Agent</option>
-                <option value="admin">Administrator</option>
+                <option key="agent" value="agent">
+                  Agent
+                </option>
+                <option key="admin" value="admin">
+                  Administrator
+                </option>
               </select>
             </div>
 

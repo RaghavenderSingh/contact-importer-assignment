@@ -115,25 +115,30 @@ export default function AIColumnDetectionStep({
               .map((row) => row[index])
               .filter(Boolean);
             const dataType = detectBasicDataType(sampleData);
+            const suggestedField = getFallbackFieldMapping(header);
+            const isCustomField = suggestedField === "new_custom_field";
+
             return {
               columnName: header,
-              suggestedField: getFallbackFieldMapping(header),
+              suggestedField: suggestedField,
               confidence: 60,
               dataType: dataType,
               sampleData: sampleData.slice(0, 5),
-              isCustomField: true,
-              customFieldConfig: {
-                label: header,
-                fieldName: header.toLowerCase().replace(/[^a-z0-9]/g, "_"),
-                type: dataType as
-                  | "text"
-                  | "number"
-                  | "phone"
-                  | "email"
-                  | "datetime"
-                  | "checkbox",
-                core: false,
-              },
+              isCustomField: isCustomField,
+              customFieldConfig: isCustomField
+                ? {
+                    label: header,
+                    fieldName: header.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+                    type: dataType as
+                      | "text"
+                      | "number"
+                      | "phone"
+                      | "email"
+                      | "datetime"
+                      | "checkbox",
+                    core: false,
+                  }
+                : undefined,
             };
           });
         }
