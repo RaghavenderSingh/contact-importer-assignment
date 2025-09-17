@@ -2,35 +2,26 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, Plus } from "lucide-react";
-import { ParsedFileData } from "../../lib/file-processing";
+import { ChevronDown } from "lucide-react";
 import { FieldDetectionResult } from "../../lib/field-mapping";
 import { contactFieldService } from "../../lib/collections";
 import { ContactField } from "../../types/firestore";
-import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { Check } from "lucide-react";
 
 interface SmartFieldMappingStepProps {
-  fileData: ParsedFileData;
   initialMappings: FieldDetectionResult[];
-  onComplete: (mappings: FieldDetectionResult[]) => void;
-  onBack: () => void;
   onMappingsChange?: (mappings: FieldDetectionResult[]) => void;
 }
 
 export default function SmartFieldMappingStep({
-  fileData,
   initialMappings,
-  onComplete,
-  onBack,
   onMappingsChange,
 }: SmartFieldMappingStepProps) {
   const [mappings, setMappings] =
     useState<FieldDetectionResult[]>(initialMappings);
   const [contactFields, setContactFields] = useState<ContactField[]>([]);
   const [expandedMapping, setExpandedMapping] = useState<number | null>(null);
-  const [newCustomFieldName, setNewCustomFieldName] = useState("");
   const [showCustomFieldForm, setShowCustomFieldForm] = useState<number | null>(
     null
   );
@@ -129,48 +120,6 @@ export default function SmartFieldMappingStep({
   const handleCancelSelection = () => {
     setTempSelection(null);
     setExpandedMapping(null);
-  };
-
-  const handleCreateCustomField = async (index: number) => {
-    if (!newCustomFieldName.trim()) return;
-
-    try {
-      const newFieldData: Omit<ContactField, "id"> = {
-        label: newCustomFieldName.trim(),
-        fieldName: newCustomFieldName.toLowerCase().replace(/[^a-z0-9]/g, "_"),
-        type: (mappings[index].dataType || "text") as
-          | "text"
-          | "number"
-          | "phone"
-          | "email"
-          | "datetime"
-          | "checkbox",
-        core: false,
-        required: false,
-        createdOn: new Date() as unknown as Timestamp,
-      };
-
-      const fieldId = await contactFieldService.createField(newFieldData);
-      const newField: ContactField = {
-        ...newFieldData,
-        id: fieldId,
-      };
-      setContactFields((prev) => [...prev, newField]);
-
-      const updatedMappings = [...mappings];
-      updatedMappings[index] = {
-        ...updatedMappings[index],
-        suggestedField: newField.fieldName,
-        isCustomField: true,
-        customFieldConfig: newField,
-      };
-      setMappings(updatedMappings);
-
-      setNewCustomFieldName("");
-      setShowCustomFieldForm(null);
-    } catch (error) {
-      console.error("Failed to create custom field:", error);
-    }
   };
 
   const availableFields = getAvailableFields();
@@ -417,7 +366,7 @@ export default function SmartFieldMappingStep({
                                     />
                                   </svg>
                                 </div>
-                                Don't import this field
+                                Don&apos;t import this field
                               </button>
                               <button
                                 onClick={() =>

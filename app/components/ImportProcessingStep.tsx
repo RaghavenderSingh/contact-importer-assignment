@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ParsedFileData } from "../../lib/file-processing";
 import { FieldDetectionResult } from "../../lib/field-mapping";
@@ -12,14 +12,7 @@ import Image from "next/image";
 interface ImportProcessingStepProps {
   fileData?: ParsedFileData;
   fieldMappings?: FieldDetectionResult[];
-  onComplete?: (results: {
-    imported: number;
-    merged: number;
-    errors: number;
-    errorDetails: string[];
-  }) => void;
   onError?: (error: string) => void;
-  onMoveToContacts?: () => void;
   onDisabledStateChange?: (disabled: boolean) => void;
 }
 
@@ -33,9 +26,7 @@ interface ProcessingResults {
 export default function ImportProcessingStep({
   fileData,
   fieldMappings = [],
-  onComplete,
   onError,
-  onMoveToContacts,
   onDisabledStateChange,
 }: ImportProcessingStepProps) {
   const [progress, setProgress] = useState(0);
@@ -49,19 +40,23 @@ export default function ImportProcessingStep({
     errorDetails: [],
   });
 
-  const processingSteps = [
-    "Analyzing data structure...",
-    "Checking for duplicate contacts...",
-    "Validating email formats...",
-    "Validating phone numbers...",
-    "Checking required fields...",
-    "Finalizing import...",
-  ];
+  const processingSteps = useMemo(
+    () => [
+      "Analyzing data structure...",
+      "Checking for duplicate contacts...",
+      "Validating email formats...",
+      "Validating phone numbers...",
+      "Checking required fields...",
+      "Finalizing import...",
+    ],
+    []
+  );
 
   useEffect(() => {
     if (fileData && fieldMappings.length > 0) {
       startProcessing();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileData, fieldMappings]);
 
   useEffect(() => {
@@ -69,215 +64,134 @@ export default function ImportProcessingStep({
     onDisabledStateChange?.(isDisabled);
   }, [isProcessing, isComplete, results.errors, onDisabledStateChange]);
 
-  const validateEmail = (email: string): boolean => {
+  const validateEmail = useCallback((email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  };
+  }, []);
 
-  const validatePhone = (phone: string): boolean => {
+  const validatePhone = useCallback((phone: string): boolean => {
     const cleanPhone = phone.replace(/\D/g, "");
     return cleanPhone.length >= 10;
-  };
+  }, []);
 
-  const normalizePhone = (phone: string): string => {
+  const normalizePhone = useCallback((phone: string): string => {
     return phone.replace(/\D/g, "");
-  };
+  }, []);
 
-  const normalizeEmail = (email: string): string => {
+  const normalizeEmail = useCallback((email: string): string => {
     return email.toLowerCase().trim();
-  };
+  }, []);
 
-  const checkForDuplicates = async (
-    contactData: Record<string, string>
-  ): Promise<{
-    isDuplicate: boolean;
-    existingContact?: Contact;
-    confidence: number;
-  }> => {
-    try {
-      const email = contactData.email ? normalizeEmail(contactData.email) : "";
-      const phone = contactData.phone ? normalizePhone(contactData.phone) : "";
-      const firstName = contactData.firstName?.toLowerCase().trim() || "";
-      const lastName = contactData.lastName?.toLowerCase().trim() || "";
+  const checkForDuplicates = useCallback(
+    async (
+      contactData: Record<string, string>
+    ): Promise<{
+      isDuplicate: boolean;
+      existingContact?: Contact;
+      confidence: number;
+    }> => {
+      try {
+        const email = contactData.email
+          ? normalizeEmail(contactData.email)
+          : "";
+        const phone = contactData.phone
+          ? normalizePhone(contactData.phone)
+          : "";
+        const firstName = contactData.firstName?.toLowerCase().trim() || "";
+        const lastName = contactData.lastName?.toLowerCase().trim() || "";
 
-      if (email) {
-        const emailQuery = await contactService.searchContacts(email);
-        const emailMatch = emailQuery.find(
-          (c) => normalizeEmail(c.email) === email
-        );
-        if (emailMatch) {
-          return {
-            isDuplicate: true,
-            existingContact: emailMatch,
-            confidence: 100,
-          };
-        }
-      }
-
-      if (phone) {
-        const phoneQuery = await contactService.searchContacts(phone);
-        const phoneMatch = phoneQuery.find(
-          (c) => normalizePhone(c.phone) === phone
-        );
-        if (phoneMatch) {
-          return {
-            isDuplicate: true,
-            existingContact: phoneMatch,
-            confidence: 95,
-          };
-        }
-      }
-
-      if (firstName && lastName) {
-        const nameQuery = await contactService.searchContacts(
-          `${firstName} ${lastName}`
-        );
-        const nameMatch = nameQuery.find(
-          (c) =>
-            c.firstName?.toLowerCase().trim() === firstName &&
-            c.lastName?.toLowerCase().trim() === lastName
-        );
-        if (nameMatch) {
-          return {
-            isDuplicate: true,
-            existingContact: nameMatch,
-            confidence: 70,
-          };
-        }
-      }
-
-      return {
-        isDuplicate: false,
-        confidence: 0,
-      };
-    } catch (error) {
-      console.error("Error checking duplicates:", error);
-      return {
-        isDuplicate: false,
-        confidence: 0,
-      };
-    }
-  };
-
-  const validateContactData = (
-    contactData: Record<string, string>
-  ): string[] => {
-    const errors: string[] = [];
-
-    if (!contactData.firstName?.trim()) {
-      errors.push("First name is required");
-    }
-    if (!contactData.lastName?.trim()) {
-      errors.push("Last name is required");
-    }
-    if (!contactData.email?.trim()) {
-      errors.push("Email is required");
-    }
-    if (!contactData.phone?.trim()) {
-      errors.push("Phone is required");
-    }
-
-    if (contactData.email && !validateEmail(contactData.email)) {
-      errors.push("Invalid email format");
-    }
-
-    if (contactData.phone && !validatePhone(contactData.phone)) {
-      errors.push("Invalid phone format");
-    }
-
-    return errors;
-  };
-
-  const handleMoveToContacts = async () => {
-    if (!fileData || !fieldMappings.length || results.errors > 0) {
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-      setCurrentStep("Saving contacts to database...");
-      setProgress(0);
-
-      const totalRows = fileData.rows.length;
-      let processedRows = 0;
-      let savedCount = 0;
-      let mergedCount = 0;
-
-      for (let i = 0; i < totalRows; i++) {
-        const row = fileData.rows[i];
-
-        const contactData: Record<string, string> = {};
-
-        fieldMappings.forEach((mapping) => {
-          if (
-            mapping.suggestedField &&
-            mapping.suggestedField !== "new_custom_field"
-          ) {
-            const columnIndex = fileData.headers.indexOf(mapping.columnName);
-            if (columnIndex >= 0 && row[columnIndex]) {
-              contactData[mapping.suggestedField] = row[columnIndex].trim();
-            }
-          }
-        });
-
-        const validationErrors = validateContactData(contactData);
-        if (validationErrors.length > 0) {
-          processedRows++;
-          continue;
-        }
-
-        const duplicateCheck = await checkForDuplicates(contactData);
-
-        if (duplicateCheck.isDuplicate && duplicateCheck.existingContact) {
-          const updatedContact: Contact = {
-            ...duplicateCheck.existingContact,
-            ...contactData,
-            updatedAt: new Date(),
-          };
-          await contactService.updateContact(
-            duplicateCheck.existingContact.id,
-            updatedContact
+        if (email) {
+          const emailQuery = await contactService.searchContacts(email);
+          const emailMatch = emailQuery.find(
+            (c) => normalizeEmail(c.email) === email
           );
-          mergedCount++;
-        } else {
-          const newContact: Omit<Contact, "id"> = {
-            ...contactData,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-          await contactService.createContact(newContact);
-          savedCount++;
+          if (emailMatch) {
+            return {
+              isDuplicate: true,
+              existingContact: emailMatch,
+              confidence: 100,
+            };
+          }
         }
 
-        processedRows++;
+        if (phone) {
+          const phoneQuery = await contactService.searchContacts(phone);
+          const phoneMatch = phoneQuery.find(
+            (c) => normalizePhone(c.phone) === phone
+          );
+          if (phoneMatch) {
+            return {
+              isDuplicate: true,
+              existingContact: phoneMatch,
+              confidence: 95,
+            };
+          }
+        }
 
-        const stepProgress = (processedRows / totalRows) * 100;
-        setProgress(stepProgress);
+        if (firstName && lastName) {
+          const nameQuery = await contactService.searchContacts(
+            `${firstName} ${lastName}`
+          );
+          const nameMatch = nameQuery.find(
+            (c) =>
+              c.firstName?.toLowerCase().trim() === firstName &&
+              c.lastName?.toLowerCase().trim() === lastName
+          );
+          if (nameMatch) {
+            return {
+              isDuplicate: true,
+              existingContact: nameMatch,
+              confidence: 70,
+            };
+          }
+        }
 
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        return {
+          isDuplicate: false,
+          confidence: 0,
+        };
+      } catch (error) {
+        console.error("Error checking duplicates:", error);
+        return {
+          isDuplicate: false,
+          confidence: 0,
+        };
+      }
+    },
+    [normalizeEmail, normalizePhone]
+  );
+
+  const validateContactData = useCallback(
+    (contactData: Record<string, string>): string[] => {
+      const errors: string[] = [];
+
+      if (!contactData.firstName?.trim()) {
+        errors.push("First name is required");
+      }
+      if (!contactData.lastName?.trim()) {
+        errors.push("Last name is required");
+      }
+      if (!contactData.email?.trim()) {
+        errors.push("Email is required");
+      }
+      if (!contactData.phone?.trim()) {
+        errors.push("Phone is required");
       }
 
-      setProgress(100);
-      setIsProcessing(false);
+      if (contactData.email && !validateEmail(contactData.email)) {
+        errors.push("Invalid email format");
+      }
 
-      onComplete?.({
-        imported: savedCount,
-        merged: mergedCount,
-        errors: 0,
-        errorDetails: [],
-      });
+      if (contactData.phone && !validatePhone(contactData.phone)) {
+        errors.push("Invalid phone format");
+      }
 
-      onMoveToContacts?.();
-    } catch (error) {
-      console.error("Error saving contacts:", error);
-      setIsProcessing(false);
-      onError?.(
-        error instanceof Error ? error.message : "Failed to save contacts"
-      );
-    }
-  };
+      return errors;
+    },
+    [validateEmail, validatePhone]
+  );
 
-  const startProcessing = async () => {
+  const startProcessing = useCallback(async () => {
     if (!fileData || !fieldMappings.length) {
       onError?.("Missing file data or field mappings");
       return;
@@ -373,7 +287,14 @@ export default function ImportProcessingStep({
         error instanceof Error ? error.message : "Failed to process contacts"
       );
     }
-  };
+  }, [
+    fileData,
+    fieldMappings,
+    onError,
+    checkForDuplicates,
+    processingSteps,
+    validateContactData,
+  ]);
 
   return (
     <div className="bg-white min-h-[400px] space-y-4 p-4">

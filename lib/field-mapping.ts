@@ -160,7 +160,7 @@ export class FieldMappingService {
     }
 
     // Check existing custom fields
-    const customFieldMatch = this.matchCustomField(header, sampleData);
+    const customFieldMatch = this.matchCustomField(header);
     if (customFieldMatch) {
       return customFieldMatch;
     }
@@ -312,10 +312,7 @@ export class FieldMappingService {
   }
 
   // Match against existing custom fields
-  private matchCustomField(
-    header: string,
-    sampleData: string[]
-  ): {
+  private matchCustomField(header: string): {
     field: string;
     confidence: number;
     dataType: string;

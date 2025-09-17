@@ -2,26 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Search, Target, Wrench } from "lucide-react";
-import { ParsedFileData } from "../../lib/file-processing";
+import { Search, Target, Wrench } from "lucide-react";
 import { FieldDetectionResult } from "../../lib/field-mapping";
 import { contactFieldService } from "../../lib/collections";
 import { ContactField } from "../../types/firestore";
 import Image from "next/image";
 
 interface FieldMappingStepProps {
-  fileData: ParsedFileData;
   initialMappings: FieldDetectionResult[];
-  onComplete: (mappings: FieldDetectionResult[]) => void;
-  onBack: () => void;
   onMappingsChange?: (mappings: FieldDetectionResult[]) => void;
 }
 
 export default function FieldMappingStep({
-  fileData,
   initialMappings,
-  onComplete,
-  onBack,
   onMappingsChange,
 }: FieldMappingStepProps) {
   const [mappings] = useState<FieldDetectionResult[]>(initialMappings);
@@ -72,10 +65,6 @@ export default function FieldMappingStep({
   const availableFields = getAvailableFields();
   const highConfidenceCount = mappings.filter((m) => m.confidence >= 90).length;
   const customFieldCount = mappings.filter((m) => m.isCustomField).length;
-
-  const handleContinue = () => {
-    onComplete(mappings);
-  };
 
   return (
     <div className="flex flex-col h-[500px] max-w-full overflow-hidden">

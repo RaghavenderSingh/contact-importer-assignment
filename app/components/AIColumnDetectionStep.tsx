@@ -13,13 +13,11 @@ import Image from "next/image";
 interface AIColumnDetectionStepProps {
   fileData: ParsedFileData;
   onComplete: (mappings: FieldDetectionResult[]) => void;
-  onBack: () => void;
 }
 
 export default function AIColumnDetectionStep({
   fileData,
   onComplete,
-  onBack,
 }: AIColumnDetectionStepProps) {
   const [progress, setProgress] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
@@ -87,7 +85,7 @@ export default function AIColumnDetectionStep({
           { step: "Finalizing mappings...", progress: 100 },
         ];
 
-        for (const { step, progress: stepProgress } of progressSteps) {
+        for (const { progress: stepProgress } of progressSteps) {
           setProgress(stepProgress);
           await new Promise((resolve) => setTimeout(resolve, 200));
         }

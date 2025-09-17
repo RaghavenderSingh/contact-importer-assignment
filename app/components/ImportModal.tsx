@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { AlertCircle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -161,18 +161,6 @@ export default function ImportModal({
     []
   );
 
-  const handleProcessingComplete = (results: {
-    imported: number;
-    merged: number;
-    errors: number;
-    errorDetails: string[];
-  }) => {
-    setState((prev) => ({
-      ...prev,
-      importResults: results,
-    }));
-  };
-
   const handleProcessingError = (error: string) => {
     setState((prev) => ({
       ...prev,
@@ -189,8 +177,7 @@ export default function ImportModal({
     const stepIds = ["detection", "smart_mapping", "processing"];
 
     const getStepState = (
-      stepId: string,
-      index: number
+      stepId: string
     ): "complete" | "current" | "pending" => {
       switch (state.step) {
         case "upload":
@@ -230,7 +217,7 @@ export default function ImportModal({
       };
 
       return {
-        state: getStepState(stepId, index),
+        state: getStepState(stepId),
         stepCount: index + 1,
         heading: stepConfig[stepId as keyof typeof stepConfig].heading,
         subtext: stepConfig[stepId as keyof typeof stepConfig].subtext,
@@ -338,32 +325,19 @@ export default function ImportModal({
                       <AIColumnDetectionStep
                         fileData={state.fileData}
                         onComplete={handleAIDetectionComplete}
-                        onBack={() =>
-                          setState((prev) => ({ ...prev, step: "upload" }))
-                        }
                       />
                     )}
 
                     {state.step === "mapping" && state.fileData && (
                       <FieldMappingStep
-                        fileData={state.fileData}
                         initialMappings={state.fieldMappings}
-                        onComplete={handleFieldMappingComplete}
-                        onBack={() =>
-                          setState((prev) => ({ ...prev, step: "detection" }))
-                        }
                         onMappingsChange={handleFieldMappingsChange}
                       />
                     )}
 
                     {state.step === "smart_mapping" && state.fileData && (
                       <SmartFieldMappingStep
-                        fileData={state.fileData}
                         initialMappings={state.fieldMappings}
-                        onComplete={handleSmartMappingComplete}
-                        onBack={() =>
-                          setState((prev) => ({ ...prev, step: "mapping" }))
-                        }
                         onMappingsChange={handleFieldMappingsChange}
                       />
                     )}
@@ -372,9 +346,7 @@ export default function ImportModal({
                       <ImportProcessingStep
                         fileData={state.fileData}
                         fieldMappings={state.fieldMappings}
-                        onComplete={handleProcessingComplete}
                         onError={handleProcessingError}
-                        onMoveToContacts={handleMoveToContacts}
                         onDisabledStateChange={setIsMoveToContactsDisabled}
                       />
                     )}
